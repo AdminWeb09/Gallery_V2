@@ -1,0 +1,6 @@
+{
+  "name": "Serverless Web Gallery",
+  "description": "A serverless-style web gallery with a responsive grid, real-time updates, image upload, and a simple administrative dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
