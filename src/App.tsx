@@ -58,7 +58,12 @@ export default function App() {
 
   // Client handlers for item insertions and deletions
   const handleItemAdded = (newItem: GalleryItem) => {
-    setItems(prev => [newItem, ...prev]);
+    setItems(prev => {
+      if (prev.some(item => item.id === newItem.id)) {
+        return prev;
+      }
+      return [newItem, ...prev];
+    });
   };
 
   const handleItemDeleted = (id: string) => {
