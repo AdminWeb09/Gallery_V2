@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sparkles, Database, PlusCircle, LayoutDashboard, Grid3X3, Layers3, 
-  Settings, HelpCircle, ArrowRight, Github, CodeXml, Heart, RefreshCw
+  Settings, HelpCircle, ArrowRight, Github, CodeXml, Heart, RefreshCw, LogOut
 } from 'lucide-react';
 import { GalleryItem, SupabaseConfigState } from './types';
 import { galleryApi } from './lib/galleryApi';
 import GalleryGrid from './components/GalleryGrid';
 import AdminPanel from './components/AdminPanel';
 import ModalDetails from './components/ModalDetails';
+import AdminLogin from './components/AdminLogin';
 
 export default function App() {
   // Global Workspace states
@@ -18,6 +19,12 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'browse' | 'admin'>('browse');
   const [lastSyncTime, setLastSyncTime] = useState<string>('');
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => localStorage.getItem('admin_session_active') === 'true');
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin_session_active');
+    setIsAdminAuthenticated(false);
+  };
 
   // Fetch initial assets and register real-time updates
   const loadDatabase = async () => {
@@ -134,6 +141,18 @@ export default function App() {
               <LayoutDashboard className="w-3.5 h-3.5" />
               <span>Admin Panel</span>
             </button>
+
+            {isAdminAuthenticated && (
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-2.5 rounded-xl bg-red-950/40 text-red-400 border border-red-900/40 hover:bg-red-900 hover:text-white hover:border-transparent transition"
+                id="nav-btn-logout"
+                title="Keluar Admin"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Keluar</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -203,13 +222,20 @@ export default function App() {
               exit={{ opacity: 0, y: -10 }}
               id="gallery-admin-container"
             >
-              <AdminPanel
-                items={items}
-                onItemAdded={handleItemAdded}
-                onItemDeleted={handleItemDeleted}
-                config={config}
-                onConfigChange={setConfig}
-              />
+              {!isAdminAuthenticated ? (
+                <AdminLogin 
+                  onSuccess={() => setIsAdminAuthenticated(true)}
+                  onBack={() => setActiveTab('browse')}
+                />
+              ) : (
+                <AdminPanel
+                  items={items}
+                  onItemAdded={handleItemAdded}
+                  onItemDeleted={handleItemDeleted}
+                  config={config}
+                  onConfigChange={setConfig}
+                />
+              )}
             </motion.div>
           )}
 
