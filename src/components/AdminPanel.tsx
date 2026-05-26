@@ -465,61 +465,48 @@ export default function AdminPanel({ items, onItemAdded, onItemDeleted, config, 
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Form Config inputs */}
-              <form onSubmit={handleSaveConfig} className="space-y-4 bg-zinc-900/30 p-5 rounded-xl border border-zinc-900">
-                <h4 className="text-xs font-bold font-mono tracking-wider text-zinc-400 uppercase">Sinkronisasi Kredensial</h4>
+              {/* Environment variables Guide */}
+              <div className="space-y-4 bg-zinc-900/30 p-5 rounded-xl border border-zinc-900">
+                <h4 className="text-xs font-bold font-mono tracking-wider text-zinc-400 uppercase">Informasi Kredensial Environment</h4>
                 
-                <div>
-                  <label className="block text-[11px] font-medium text-zinc-500 mb-1.5 font-mono">SUPABASE URL</label>
-                  <input
-                    type="url"
-                    placeholder="https://abcde12345.supabase.co"
-                    value={supabaseUrl}
-                    onChange={(e) => setSupabaseUrl(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-850 focus:border-emerald-500/70 text-xs p-3 rounded-lg text-zinc-200 outline-none font-mono"
-                    id="input-supabase-url"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-medium text-zinc-500 mb-1.5 font-mono">SUPABASE ANON PUBLIC KEY</label>
-                  <input
-                    type="password"
-                    placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                    value={supabaseKey}
-                    onChange={(e) => setSupabaseKey(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-850 focus:border-emerald-500/70 text-xs p-3 rounded-lg text-zinc-200 outline-none font-mono"
-                    id="input-supabase-key"
-                  />
-                </div>
-
-                <div className="pt-2">
-                  <label className="flex items-center gap-2.5 text-xs text-zinc-400 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={useLocalFallback}
-                      onChange={(e) => setUseLocalFallback(e.target.checked)}
-                      className="rounded border-zinc-800 bg-zinc-950 text-emerald-500 focus:ring-emerald-500/20"
-                      id="checkbox-local-fallback"
-                    />
-                    <span>Gunakan Simulasi Lokal Offline saja</span>
-                  </label>
-                </div>
-
-                {showConfigSuccess && (
-                  <div className="text-center font-mono text-[10px] text-emerald-400 animate-pulse">
-                    Kredensial disimpan! Sistem diperbarui.
+                {config.isConnected ? (
+                  <div className="space-y-4">
+                    <div className="p-3 bg-emerald-950/20 border border-emerald-900/30 rounded-xl text-emerald-400 text-xs">
+                      Sistem mendeteksi kredensial secara langsung dari environment file <code className="font-mono text-white bg-zinc-950 px-1 py-0.5 rounded">.env</code> lokal Anda. Pengaturan UI web dinonaktifkan demi alasan efisiensi & keamanan maksimal.
+                    </div>
+                    <div className="space-y-2.5">
+                      <div>
+                        <span className="block text-[10px] font-mono text-zinc-500 uppercase tracking-wider">URL Supabase Aktif</span>
+                        <code className="block bg-zinc-950 border border-zinc-900 text-zinc-300 text-xs p-2.5 rounded-lg font-mono truncate">
+                          {config.url}
+                        </code>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] font-mono text-zinc-500 uppercase tracking-wider">Kunci Publik Anon</span>
+                        <code className="block bg-zinc-950 border border-zinc-900 text-zinc-500 text-xs p-2.5 rounded-lg font-mono">
+                          ••••••••••••••••••••••••••••••••••••••••••••
+                        </code>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="p-3 bg-zinc-950 border border-zinc-900 rounded-xl text-zinc-400 text-xs leading-relaxed">
+                      Sistem saat ini menggunakan database emulasi lokal (<span className="text-amber-400">Mock Engine</span>) karena variabel <code className="font-mono text-zinc-200">.env</code> belum dikonfigurasi.
+                    </div>
+                    <p className="text-xs text-zinc-500">
+                      Untuk menghubungkan aplikasi Anda ke database cloud riil, tambahkan baris berikut ke file <strong className="text-zinc-300">.env</strong> atau <strong className="text-zinc-300">.env.local</strong> pada folder root proyek Anda:
+                    </p>
+                    <pre className="p-3 bg-zinc-950 rounded-xl border border-zinc-900 text-[11px] text-zinc-400 font-mono space-y-1 block leading-relaxed overflow-x-auto">
+{`VITE_SUPABASE_URL=https://proyek-anda.supabase.co
+VITE_SUPABASE_ANON_KEY=token-anon-publik-anda`}
+                    </pre>
+                    <div className="text-[10px] text-zinc-600 italic">
+                      💡 Setelah mengedit file .env lokal Anda, reload/restart server untuk memuat koneksi baru secara otomatis.
+                    </div>
                   </div>
                 )}
-
-                <button
-                  type="submit"
-                  className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-xs py-2.5 rounded-lg transition"
-                  id="btn-save-supabase-config"
-                >
-                  Hubungkan database Supabase
-                </button>
-              </form>
+              </div>
 
               {/* PostgreSQL Schema Code display */}
               <div className="space-y-3">

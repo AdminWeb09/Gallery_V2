@@ -95,11 +95,11 @@ const ENV_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '';
 
 // Manage configuration state
 let currentConfig: SupabaseConfigState = {
-  url: localStorage.getItem('supabase_url') || ENV_URL,
-  anonKey: localStorage.getItem('supabase_anon_key') || ENV_KEY,
+  url: ENV_URL,
+  anonKey: ENV_KEY,
   isConnected: false,
-  isConfigured: false,
-  useLocalFallback: localStorage.getItem('supabase_use_local') !== 'false' // Default to true if not configured
+  isConfigured: !!(ENV_URL && ENV_KEY),
+  useLocalFallback: !ENV_URL || !ENV_KEY || !ENV_URL.includes('supabase.co')
 };
 
 // Initialize Supabase Client if configured
@@ -166,28 +166,8 @@ export const galleryApi = {
     return { ...currentConfig };
   },
 
-  // Save config changes from UI
+  // Save config changes from UI (Deprecated: environment variables are loaded directly from local .env)
   saveConfig(url: string, anonKey: string, useLocalFallback: boolean): SupabaseConfigState {
-    localStorage.setItem('supabase_url', url);
-    localStorage.setItem('supabase_anon_key', anonKey);
-    localStorage.setItem('supabase_use_local', String(useLocalFallback));
-
-    currentConfig.url = url;
-    currentConfig.anonKey = anonKey;
-    currentConfig.useLocalFallback = useLocalFallback;
-
-    if (useLocalFallback) {
-      currentConfig.isConfigured = !!(url && anonKey);
-      currentConfig.isConnected = false;
-      supabaseInstance = null;
-    } else {
-      tryInitializeSupabase();
-    }
-    
-    // Trigger standard reload event
-    const items = getLocalItems();
-    emitUpdate(items);
-    
     return { ...currentConfig };
   },
 
