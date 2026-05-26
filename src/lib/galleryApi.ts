@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { GalleryItem, GalleryStats, SupabaseConfigState } from '../types';
 
 // Default pre-loaded gallery items (high contrast, beautiful photography)
@@ -221,23 +222,61 @@ export const galleryApi = {
           const fileName = `${Math.random().toString(36).substring(2, 11)}-${Date.now()}.${fileExt}`;
           storagePath = `uploads/${fileName}`;
 
-          const { error: uploadError } = await supabaseInstance.storage
-            .from('gallery')
-            .upload(storagePath, payload.file, {
-              cacheControl: '3600',
-              upsert: false
+          const s3AccessKey = import.meta.env.VITE_SUPABASE_S3_ACCESS_KEY_ID;
+          const s3SecretKey = import.meta.env.VITE_SUPABASE_S3_SECRET_ACCESS_KEY;
+
+          if (s3AccessKey && s3SecretKey) {
+            console.log('Using robust AWS S3 protocol for upload...');
+            const region = import.meta.env.VITE_SUPABASE_S3_REGION || 'us-east-1';
+            const projectRef = getProjectRef();
+            const s3Client = new S3Client({
+              endpoint: `https://${projectRef}.storage.supabase.co/storage/v1/s3`,
+              region,
+              credentials: {
+                accessKeyId: s3AccessKey,
+                secretAccessKey: s3SecretKey,
+              },
+              forcePathStyle: true,
             });
 
-          if (uploadError) throw uploadError;
+            const uint8Array = await fileToUint8Array(payload.file);
+            const command = new PutObjectCommand({
+              Bucket: 'gallery',
+              Key: storagePath,
+              Body: uint8Array,
+              ContentType: payload.file.type || 'image/jpeg',
+            });
 
-          // Get public URL
-          const { data: { publicUrl } } = supabaseInstance.storage
-            .from('gallery')
-            .getPublicUrl(storagePath);
+            await s3Client.send(command);
+            
+            // Public URL is constructed standardly from supabase public storage path
+            finalUrl = `${currentConfig.url}/storage/v1/object/public/gallery/${storagePath}`;
+            console.log('S3 Protocol upload complete. Public URL:', finalUrl);
+          } else {
+            console.log('S3 Credentials missing in env. Performing direct HTTP upload to bypass multipart issues...');
+            // Highly robust binary upload directly to Supabase storage REST API
+            const projectRef = getProjectRef();
+            const putUrl = `https://${projectRef}.supabase.co/storage/v1/object/gallery/${storagePath}`;
+            const uploadResponse = await fetch(putUrl, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${currentConfig.anonKey}`,
+                'x-upsert': 'true',
+              },
+              body: payload.file
+            });
 
-          finalUrl = publicUrl;
+            if (!uploadResponse.ok) {
+              const errText = await uploadResponse.text();
+              throw new Error(`Direct HTTP upload failed with status ${uploadResponse.status}: ${errText}`);
+            }
+
+            // Public URL
+            finalUrl = `${currentConfig.url}/storage/v1/object/public/gallery/${storagePath}`;
+            console.log('Direct HTTP upload successful! Public URL:', finalUrl);
+          }
         } catch (err) {
-          console.error('Supabase storage upload failed, falling back to Base64:', err);
+          console.error('Core storage upload failed, falling back to Base64:', err);
           // If live upload fails, store in local DB as Base64 helper
           finalUrl = await fileToBase64(payload.file);
         }
@@ -519,6 +558,22 @@ function fileToBase64(file: File): Promise<string> {
     reader.onload = () => resolve(reader.result as string);
     reader.onerror = (error) => reject(error);
   });
+}
+
+// Convert File helper to safe Uint8Array for browser AWS S3 client
+async function fileToUint8Array(file: File): Promise<Uint8Array> {
+  const arrayBuffer = await file.arrayBuffer();
+  return new Uint8Array(arrayBuffer);
+}
+
+// Extract project reference parsed from Supabase API URL
+function getProjectRef(): string {
+  const url = import.meta.env.VITE_SUPABASE_URL || 'https://pkoribfxgybwzgbtgnke.supabase.co';
+  const match = url.match(/https:\/\/([^.]+)\.supabase\.co/);
+  if (match && match[1]) {
+    return match[1];
+  }
+  return 'pkoribfxgybwzgbtgnke';
 }
 
 // Generate a valid RFC4122 v4 UUID string
