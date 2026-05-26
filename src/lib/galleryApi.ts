@@ -89,9 +89,9 @@ const INITIAL_GALLERY_ITEMS: GalleryItem[] = [
   }
 ];
 
-// Read Supabase config from env or fallback to empty
-const ENV_URL = (import.meta as any).env.VITE_SUPABASE_URL || '';
-const ENV_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || '';
+// Read Supabase config from env or fallback to your project credentials as standard default
+const ENV_URL = (import.meta as any).env.VITE_SUPABASE_URL || 'https://pkoribfxgybwzgbtgnke.supabase.co';
+const ENV_KEY = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrb3JpYmZ4Z3lid3pnYnRnbmtlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2NzQ3MzEsImV4cCI6MjA5NTI1MDczMX0.GM0-yO0MKypz0NEmntI6K0d6tKKCb-0DunJ6JWx6DQY';
 
 // Manage configuration state
 let currentConfig: SupabaseConfigState = {
